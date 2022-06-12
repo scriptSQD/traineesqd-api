@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { UsersService } from "src/users/users.service";
-import { User } from "schemas/User.schema";
+import { User } from "src/schemas/User.schema";
 import { UserDTO } from "src/users/dtos/User.dto";
 
 import * as a2 from "argon2";
