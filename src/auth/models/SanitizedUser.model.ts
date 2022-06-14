@@ -1,5 +1,6 @@
 export type SanitizedUser = {
-    id: string;
+    _id: string;
     email: string;
     username: string;
+    hasTwoFa: boolean;
 };

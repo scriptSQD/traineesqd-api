@@ -6,6 +6,9 @@ import { UserDTO } from "src/users/dtos/User.dto";
 
 import * as a2 from "argon2";
 import { SanitizedUser } from "./models/SanitizedUser.model";
+import { authenticator } from "otplib";
+import { SanitizeUser } from "src/users/utils/Users.utils";
+import { create } from "domain";
 
 @Injectable()
 export class AuthService {
@@ -17,6 +20,7 @@ export class AuthService {
     async validateCredentials(
         username: string,
         password: string,
+        totp?: string,
     ): Promise<User> {
         const user = await this.us.getByUsername(username);
         if (!user)
@@ -32,13 +36,32 @@ export class AuthService {
                 HttpStatus.BAD_REQUEST,
             );
 
+        if (user.hasTwoFa) {
+            if (!totp)
+                throw new HttpException(
+                    { totpCodeRequired: true },
+                    HttpStatus.BAD_REQUEST,
+                );
+
+            if (
+                !authenticator.verify({
+                    token: totp,
+                    secret: process.env.OTP_SECRET,
+                })
+            )
+                throw new HttpException(
+                    { message: "Incorrect OTP code." },
+                    HttpStatus.BAD_REQUEST,
+                );
+        }
+
         return user;
     }
 
     signJwt(usr: User): { user: SanitizedUser; jwt: string } {
         const payload = { user: usr };
         return {
-            user: { username: usr.username, email: usr.email, id: usr._id },
+            user: usr,
             jwt: this.jwt_s.sign(payload, { secret: process.env.JWT_SECRET }),
         };
     }
@@ -52,8 +75,12 @@ export class AuthService {
             }),
         };
 
-        let created = await this.us.create(user);
-        delete created.password;
+        let created = await this.us.create(user).catch((err) => {
+            throw new HttpException(
+                { message: "Error occured when creating user.", details: err },
+                HttpStatus.BAD_REQUEST,
+            );
+        });
 
         return created;
     }

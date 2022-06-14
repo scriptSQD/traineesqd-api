@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { User } from "src/schemas/User.schema";
@@ -12,8 +12,10 @@ export class UsersService {
 
     async getById(id: string): Promise<User> {
         const user = await this.usrModel.findById(id).exec();
+
         let converted = user.toObject();
         delete converted.password;
+
         return converted;
     }
 
@@ -26,7 +28,14 @@ export class UsersService {
         return await newUser.save();
     }
 
-    async updateById(id: number, upd: UpdateUserDTO) {
+    async updateById(id: string, upd: UpdateUserDTO) {
         return await this.usrModel.updateOne({ id: id }, upd);
+    }
+
+    async checkUsername(username: string): Promise<boolean> {
+        return (await this.usrModel.findOne({ username: username })) === null;
+    }
+    async checkEmail(email: string): Promise<boolean> {
+        return (await this.usrModel.findOne({ email: email })) === null;
     }
 }

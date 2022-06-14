@@ -6,6 +6,7 @@ import { UsersService } from "src/users/users.service";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtStrat } from "./strategies/jwt.strategy";
+import { TwoFaModule } from "./two-fa/two-fa.module";
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { JwtStrat } from "./strategies/jwt.strategy";
                 schema: UserSchema,
             },
         ]),
+        TwoFaModule,
     ],
     controllers: [AuthController],
     providers: [AuthService, UsersService, JwtStrat],
