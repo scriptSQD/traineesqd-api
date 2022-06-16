@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { TwoFaService } from "./two-fa.service";
 import { TwoFaController } from "./two-fa.controller";
 import { MongooseModule } from "@nestjs/mongoose";
-import { User, UserSchema } from "src/schemas/User.schema";
+import { User, UserSchema } from "src/schemas/user.schema";
 
 @Module({
     imports: [

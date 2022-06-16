@@ -6,6 +6,6 @@ export class AppController {
 
     @Get()
     getHello(): string {
-        return "Hello, stranger! This is the beginning of TraineeSQD API!";
+        return "Hello, stranger! This is the root of TraineeSQD API!";
     }
 }

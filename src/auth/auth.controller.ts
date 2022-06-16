@@ -1,6 +1,7 @@
 import { Body, Controller, Post } from "@nestjs/common";
 import { IsOptional, IsString } from "class-validator";
-import { UserDTO } from "src/users/dtos/User.dto";
+import { from, Observable, of, switchMap } from "rxjs";
+import { UserDTO } from "src/users/dtos/user.dto";
 import { AuthService } from "./auth.service";
 import { SanitizedUser } from "./models/SanitizedUser.model";
 
@@ -24,19 +25,20 @@ export class AuthController {
     constructor(private readonly as: AuthService) {}
 
     @Post("login")
-    async login(@Body() body: LoginDTO): Promise<JwtLogin> {
-        const payload = await this.as.validateCredentials(
-            body.username,
-            body.password,
-            body.totp || undefined,
-        );
-
-        return this.as.signJwt(payload);
+    login(@Body() body: LoginDTO): Observable<JwtLogin> {
+        return from(
+            this.as.validateCredentials(
+                body.username,
+                body.password,
+                body.totp || undefined,
+            ),
+        ).pipe(switchMap((user) => of(this.as.signJwt(user))));
     }
 
     @Post("register")
-    async register(@Body() body: UserDTO): Promise<JwtLogin> {
-        const user = await this.as.register(body);
-        return this.as.signJwt(user);
+    register(@Body() body: UserDTO): Observable<JwtLogin> {
+        return from(this.as.register(body)).pipe(
+            switchMap((user) => of(this.as.signJwt(user))),
+        );
     }
 }

@@ -14,11 +14,14 @@ export class User {
     })
     username: string;
 
-    @Prop()
+    @Prop({ unique: true, required: true })
     email: string;
 
-    @Prop({ required: true })
+    @Prop({ required: true, select: false })
     password: string;
+
+    @Prop({ select: false })
+    totpSecret?: string;
 
     @Prop({ required: true, default: false })
     hasTwoFa: boolean;

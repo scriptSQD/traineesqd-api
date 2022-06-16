@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
-import { User, UserSchema } from "src/schemas/User.schema";
+import { User, UserSchema } from "src/schemas/user.schema";
 import { UsersService } from "src/users/users.service";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
-import { JwtStrat } from "./strategies/jwt.strategy";
+import { JwtStrategy } from "./strategies/jwt.strategy";
 import { TwoFaModule } from "./two-fa/two-fa.module";
 
 @Module({
@@ -25,6 +25,6 @@ import { TwoFaModule } from "./two-fa/two-fa.module";
         TwoFaModule,
     ],
     controllers: [AuthController],
-    providers: [AuthService, UsersService, JwtStrat],
+    providers: [AuthService, UsersService, JwtStrategy],
 })
 export class AuthModule {}

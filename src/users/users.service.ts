@@ -1,8 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
-import { User } from "src/schemas/User.schema";
-import { UpdateUserDTO, UserDTO } from "./dtos/User.dto";
+import { Model, UpdateQuery } from "mongoose";
+import { from, Observable, of, switchMap } from "rxjs";
+import { User } from "src/schemas/user.schema";
+import { UserDTO } from "./dtos/user.dto";
 
 @Injectable()
 export class UsersService {
@@ -10,32 +11,54 @@ export class UsersService {
         @InjectModel(User.name) private readonly usrModel: Model<User>,
     ) {}
 
-    async getById(id: string): Promise<User> {
-        const user = await this.usrModel.findById(id).exec();
-
-        let converted = user.toObject();
-        delete converted.password;
-
-        return converted;
+    getById(id: string): Observable<User> {
+        return from(this.usrModel.findById(id).exec()).pipe(
+            switchMap((usr) => {
+                return of(usr.toObject<User>());
+            }),
+        );
     }
 
-    async getByUsername(username: string): Promise<User> {
-        return await this.usrModel.findOne({ username: username }).exec();
+    getByUsername(username: string): Observable<User> {
+        return from(
+            this.usrModel
+                .findOne({ username: username })
+                .select("+password")
+                .select("+totpSecret")
+                .exec(),
+        ).pipe(
+            switchMap((usr) => {
+                return of(usr.toObject<User>());
+            }),
+        );
     }
 
-    async create(user: UserDTO): Promise<User> {
+    create(user: UserDTO): Observable<User> {
         const newUser = new this.usrModel(user);
-        return await newUser.save();
+
+        return from(newUser.save()).pipe(
+            switchMap((usr) => {
+                return of(usr.toObject<User>());
+            }),
+        );
     }
 
-    async updateById(id: string, upd: UpdateUserDTO) {
-        return await this.usrModel.updateOne({ id: id }, upd);
+    updateById(id: string, upd: UpdateQuery<User>): Observable<any> {
+        return from(this.usrModel.updateOne({ id: id }, upd));
     }
 
-    async checkUsername(username: string): Promise<boolean> {
-        return (await this.usrModel.findOne({ username: username })) === null;
+    checkUsername(username: string): Observable<boolean> {
+        return from(this.usrModel.findOne({ username: username })).pipe(
+            switchMap((usr) => {
+                return of(!usr);
+            }),
+        );
     }
-    async checkEmail(email: string): Promise<boolean> {
-        return (await this.usrModel.findOne({ email: email })) === null;
+    checkEmail(email: string): Observable<boolean> {
+        return from(this.usrModel.findOne({ email: email })).pipe(
+            switchMap((usr) => {
+                return of(!usr);
+            }),
+        );
     }
 }
