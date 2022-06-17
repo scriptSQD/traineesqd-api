@@ -37,7 +37,6 @@ export class TwoFaController {
         @Request() req: { user: User },
         @Body() body: TwoFaRegBody,
     ): Observable<boolean> {
-        console.log("body:", body);
         return this.tfa.registerTwoFa(req.user, body.token);
     }
 }

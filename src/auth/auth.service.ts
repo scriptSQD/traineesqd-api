@@ -36,9 +36,6 @@ export class AuthService {
                         HttpStatus.BAD_REQUEST,
                     );
 
-                console.log("user hasTwoFa:", user.hasTwoFa);
-                console.log("user.totpSecret:", user.totpSecret);
-
                 if (user.hasTwoFa && !user.totpSecret) {
                     this.usersService
                         .updateById(user._id, {
