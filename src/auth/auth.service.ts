@@ -88,8 +88,10 @@ export class AuthService {
     signJwt(usr: User): { user: SanitizedUser; jwt: string } {
         const payload = { user: usr };
 
+        const { password, ...sanUser } = usr;
+
         return {
-            user: usr,
+            user: sanUser,
             jwt: this.jwtService.sign(payload, {
                 secret: process.env.JWT_SECRET,
             }),
