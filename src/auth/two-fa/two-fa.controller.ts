@@ -20,7 +20,7 @@ class TwoFaRegBody {
 
 @Controller("2fa")
 export class TwoFaController {
-    constructor(private readonly tfa: TwoFaService) {}
+    constructor(private readonly twoFaService: TwoFaService) {}
 
     @UseGuards(JwtAuthGuard)
     @Get("getUri")
@@ -28,7 +28,7 @@ export class TwoFaController {
         encryptedHexified: string;
         iv: string;
     }> {
-        return this.tfa.getAppUri(req.user);
+        return this.twoFaService.getAppUri(req.user);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -37,6 +37,6 @@ export class TwoFaController {
         @Request() req: { user: User },
         @Body() body: TwoFaRegBody,
     ): Observable<boolean> {
-        return this.tfa.registerTwoFa(req.user, body.token);
+        return this.twoFaService.registerTwoFa(req.user, body.token);
     }
 }

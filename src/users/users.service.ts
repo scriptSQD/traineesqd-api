@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, UpdateQuery } from "mongoose";
 import { from, Observable, of, switchMap } from "rxjs";
@@ -8,11 +8,11 @@ import { UserDTO } from "./dtos/user.dto";
 @Injectable()
 export class UsersService {
     constructor(
-        @InjectModel(User.name) private readonly usrModel: Model<User>,
+        @InjectModel(User.name) private readonly userModel: Model<User>,
     ) {}
 
     getById(id: string): Observable<User> {
-        return from(this.usrModel.findById(id).exec()).pipe(
+        return from(this.userModel.findById(id).exec()).pipe(
             switchMap((usr) => {
                 return of(usr.toObject<User>());
             }),
@@ -21,20 +21,25 @@ export class UsersService {
 
     getByUsername(username: string): Observable<User> {
         return from(
-            this.usrModel
+            this.userModel
                 .findOne({ username: username })
                 .select("+password")
                 .select("+totpSecret")
                 .exec(),
         ).pipe(
             switchMap((usr) => {
-                return of(usr.toObject<User>());
+                if (!usr)
+                    throw new HttpException(
+                        "Invalid username.",
+                        HttpStatus.BAD_REQUEST,
+                    );
+                else return of(usr.toObject<User>());
             }),
         );
     }
 
     create(user: UserDTO): Observable<User> {
-        const newUser = new this.usrModel(user);
+        const newUser = new this.userModel(user);
 
         return from(newUser.save()).pipe(
             switchMap((usr) => {
@@ -44,18 +49,18 @@ export class UsersService {
     }
 
     updateById(id: string, upd: UpdateQuery<User>): Observable<any> {
-        return from(this.usrModel.updateOne({ id: id }, upd));
+        return from(this.userModel.updateOne({ _id: id }, upd));
     }
 
     checkUsername(username: string): Observable<boolean> {
-        return from(this.usrModel.findOne({ username: username })).pipe(
+        return from(this.userModel.findOne({ username: username })).pipe(
             switchMap((usr) => {
                 return of(!usr);
             }),
         );
     }
     checkEmail(email: string): Observable<boolean> {
-        return from(this.usrModel.findOne({ email: email })).pipe(
+        return from(this.userModel.findOne({ email: email })).pipe(
             switchMap((usr) => {
                 return of(!usr);
             }),
