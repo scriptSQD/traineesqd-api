@@ -67,13 +67,14 @@ export class TodosService {
     ): Observable<boolean> {
         return from(this.todosModel.findById(id)).pipe(
             switchMap((todo) => {
-                this.checkIsOwner(user, todo.user);
+                if (!todo) return of(undefined);
+                this.checkIsOwner(user, todo?.user);
                 return from(
                     this.todosModel.updateOne({ _id: id }, updated).exec(),
                 );
             }),
             switchMap((res) => {
-                return of(res.modifiedCount !== 0);
+                return of(res !== undefined && res?.modifiedCount !== 0);
             }),
         );
     }
@@ -86,7 +87,7 @@ export class TodosService {
                 return from(this.todosModel.deleteOne({ _id: id }).exec());
             }),
             switchMap((res) => {
-                return of(res?.deletedCount !== 0);
+                return of(res !== undefined && res?.deletedCount !== 0);
             }),
         );
     }
