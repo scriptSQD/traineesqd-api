@@ -13,7 +13,7 @@ export class TodosService {
         @InjectModel(Todo.name) private readonly todosModel: Model<Todo>,
     ) {}
 
-    private checkIfUserIsOwner(user: User, userId: string): void {
+    private checkIsOwner(user: User, userId: string): void {
         if (user._id !== userId)
             throw new HttpException("Not an owner.", HttpStatus.FORBIDDEN);
     }
@@ -29,7 +29,7 @@ export class TodosService {
     getById(id: string, user: User): Observable<ITodo> {
         return from(this.todosModel.findById(id).exec()).pipe(
             switchMap((todo) => {
-                this.checkIfUserIsOwner(user, todo.user);
+                this.checkIsOwner(user, todo.user);
                 return of(todo.toObject());
             }),
         );
@@ -45,6 +45,21 @@ export class TodosService {
         );
     }
 
+    createMany(todos: TodoDTO[], userId: string): Observable<ITodo[]> {
+        const checkoutTodos = todos.map((todo) => {
+            return { ...todo, user: userId };
+        });
+
+        console.log(checkoutTodos);
+
+        return from(this.todosModel.insertMany(checkoutTodos)).pipe(
+            switchMap((res) => {
+                console.log("result: ", res);
+                return of(res.map((todo) => todo.toObject()) as ITodo[]);
+            }),
+        );
+    }
+
     updateById(
         id: string,
         updated: Partial<TodoDTO>,
@@ -52,7 +67,7 @@ export class TodosService {
     ): Observable<boolean> {
         return from(this.todosModel.findById(id)).pipe(
             switchMap((todo) => {
-                this.checkIfUserIsOwner(user, todo.user);
+                this.checkIsOwner(user, todo.user);
                 return from(
                     this.todosModel.updateOne({ _id: id }, updated).exec(),
                 );
@@ -66,11 +81,12 @@ export class TodosService {
     removeById(id: string, user: User): Observable<boolean> {
         return from(this.todosModel.findById(id)).pipe(
             switchMap((todo) => {
-                this.checkIfUserIsOwner(user, todo.user);
+                if (!todo) return of(undefined);
+                this.checkIsOwner(user, todo?.user);
                 return from(this.todosModel.deleteOne({ _id: id }).exec());
             }),
             switchMap((res) => {
-                return of(res.deletedCount !== 0);
+                return of(res?.deletedCount !== 0);
             }),
         );
     }

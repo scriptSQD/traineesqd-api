@@ -40,13 +40,14 @@ export class TodosController {
 
     @UseGuards(JwtAuthGuard)
     @Post()
-    createOne(
-        @Body() body: TodoDTO,
+    create(
+        @Body() body: TodoDTO | TodoDTO[],
         @Req() request: { user: User },
-    ): Observable<ITodo> {
+    ): Observable<ITodo | ITodo[]> {
         const userId = request.user._id;
-
-        return this.todosService.createOne(body, userId);
+        if (Array.isArray(body))
+            return this.todosService.createMany(body as TodoDTO[], userId);
+        else return this.todosService.createOne(body as TodoDTO, userId);
     }
 
     @UseGuards(JwtAuthGuard)
