@@ -7,7 +7,7 @@ import { UserDTO } from "src/users/dtos/user.dto";
 import * as a2 from "argon2";
 import { SanitizedUser } from "./models/SanitizedUser.model";
 import { authenticator } from "otplib";
-import { catchError, from, Observable, of, switchMap } from "rxjs";
+import { catchError, from, Observable, of, switchMap, tap } from "rxjs";
 
 @Injectable()
 export class AuthService {
@@ -29,17 +29,28 @@ export class AuthService {
                         HttpStatus.BAD_REQUEST,
                     );
 
-                const pwdsMatch = a2.verify(user.password, password);
-                if (!pwdsMatch)
-                    throw new HttpException(
-                        "Invalid username or password.",
-                        HttpStatus.BAD_REQUEST,
-                    );
+                return of(user);
+            }),
+            // Workaround to sync verify password
+            switchMap((user) => {
+                return from(a2.verify(user.password, password)).pipe(
+                    switchMap((pwdsMatch) => {
+                        if (!pwdsMatch)
+                            throw new HttpException(
+                                "Invalid username or password.",
+                                HttpStatus.BAD_REQUEST,
+                            );
 
+                        return of(user);
+                    }),
+                );
+            }),
+            switchMap((user) => {
                 if (user.hasTwoFa && !user.totpSecret) {
                     this.usersService
                         .updateById(user._id, {
                             hasTwoFa: false,
+                            totpSecret: "",
                         })
                         .pipe(
                             catchError(() => {
