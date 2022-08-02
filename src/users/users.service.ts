@@ -19,10 +19,12 @@ export class UsersService {
         );
     }
 
-    getByUsername(username: string): Observable<User> {
+    getByIdentifier(identifier: string): Observable<User> {
         return from(
             this.userModel
-                .findOne({ username: username })
+                .findOne({
+                    $or: [{ username: identifier }, { email: identifier }],
+                })
                 .select("+password")
                 .select("+totpSecret")
                 .exec(),
@@ -30,7 +32,7 @@ export class UsersService {
             switchMap((usr) => {
                 if (!usr)
                     throw new HttpException(
-                        "Invalid username.",
+                        "Invalid identifier.",
                         HttpStatus.BAD_REQUEST,
                     );
                 else return of(usr.toObject<User>());

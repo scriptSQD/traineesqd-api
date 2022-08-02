@@ -16,16 +16,16 @@ export class AuthService {
         private readonly jwtService: JwtService,
     ) {}
 
-    validateCredentials(
-        username: string,
+    authenticate(
+        identifier: string,
         password: string,
         totp?: string,
     ): Observable<User> {
-        return this.usersService.getByUsername(username).pipe(
+        return this.usersService.getByIdentifier(identifier).pipe(
             switchMap((user) => {
                 if (!user)
                     throw new HttpException(
-                        "Invalid username or password.",
+                        "Invalid identifier or password.",
                         HttpStatus.BAD_REQUEST,
                     );
 
@@ -37,7 +37,7 @@ export class AuthService {
                     switchMap((pwdsMatch) => {
                         if (!pwdsMatch)
                             throw new HttpException(
-                                "Invalid username or password.",
+                                "Invalid identifier or password.",
                                 HttpStatus.BAD_REQUEST,
                             );
 
@@ -97,16 +97,17 @@ export class AuthService {
         );
     }
 
-    signJwt(usr: User): { user: SanitizedUser; jwt: string } {
-        const payload = { user: usr };
-
-        const { password, ...sanUser } = usr;
+    issueJwt(user: User): { user: SanitizedUser; jwt: string } {
+        const { password, ...safeUserData } = user;
 
         return {
-            user: sanUser,
-            jwt: this.jwtService.sign(payload, {
-                secret: process.env.JWT_SECRET,
-            }),
+            user: safeUserData,
+            jwt: this.jwtService.sign(
+                { user },
+                {
+                    secret: process.env.JWT_SECRET,
+                },
+            ),
         };
     }
 
@@ -123,7 +124,6 @@ export class AuthService {
                 }),
             ),
             switchMap((user) => this.usersService.create(user)),
-
             catchError(() => {
                 throw new HttpException(
                     "Failed to create user in database.",
