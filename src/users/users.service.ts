@@ -49,7 +49,7 @@ export class UsersService {
     }
 
     updateById(id: string, upd: UpdateQuery<User>): Observable<any> {
-        return from(this.userModel.updateOne({ _id: id }, upd));
+        return from(this.userModel.updateOne({ _id: id }, upd).exec());
     }
 
     checkUsername(username: string): Observable<boolean> {

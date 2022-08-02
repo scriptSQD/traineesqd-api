@@ -7,7 +7,7 @@ import { UserDTO } from "src/users/dtos/user.dto";
 import * as a2 from "argon2";
 import { SanitizedUser } from "./models/SanitizedUser.model";
 import { authenticator } from "otplib";
-import { catchError, from, Observable, of, switchMap, tap } from "rxjs";
+import { catchError, from, Observable, of, switchMap } from "rxjs";
 
 @Injectable()
 export class AuthService {
@@ -31,9 +31,9 @@ export class AuthService {
 
                 return of(user);
             }),
-            // Workaround to sync verify password
-            switchMap((user) => {
-                return from(a2.verify(user.password, password)).pipe(
+            // Workaround to synchronously verify password
+            switchMap((user) =>
+                from(a2.verify(user.password, password)).pipe(
                     switchMap((pwdsMatch) => {
                         if (!pwdsMatch)
                             throw new HttpException(
@@ -43,8 +43,8 @@ export class AuthService {
 
                         return of(user);
                     }),
-                );
-            }),
+                ),
+            ),
             switchMap((user) => {
                 if (user.hasTwoFa && !user.totpSecret) {
                     this.usersService
@@ -59,8 +59,7 @@ export class AuthService {
                                     HttpStatus.INTERNAL_SERVER_ERROR,
                                 );
                             }),
-                        )
-                        .subscribe();
+                        );
 
                     throw new HttpException(
                         {
@@ -70,23 +69,28 @@ export class AuthService {
                         },
                         HttpStatus.UNAUTHORIZED,
                     );
-                } else if (user.hasTwoFa && !totp)
+                }
+
+                if (user.hasTwoFa && !totp) {
                     throw new HttpException(
                         { totpCodeRequired: true },
                         HttpStatus.BAD_REQUEST,
                     );
-                else if (
+                }
+
+                if (
                     user.hasTwoFa &&
                     totp &&
                     !authenticator.verify({
                         token: totp,
                         secret: user.totpSecret,
                     })
-                )
+                ) {
                     throw new HttpException(
                         "Invalid TOTP code.",
                         HttpStatus.BAD_REQUEST,
                     );
+                }
 
                 return of(user);
             }),
@@ -112,15 +116,13 @@ export class AuthService {
                 type: a2.argon2i,
             }),
         ).pipe(
-            switchMap((hash) => {
-                return of({
+            switchMap((hash) =>
+                of({
                     ...user,
                     password: hash,
-                });
-            }),
-            switchMap((user) => {
-                return this.usersService.create(user);
-            }),
+                }),
+            ),
+            switchMap((user) => this.usersService.create(user)),
 
             catchError(() => {
                 throw new HttpException(

@@ -50,8 +50,6 @@ export class TodosService {
             return { ...todo, user: userId };
         });
 
-        console.log(checkoutTodos);
-
         return from(this.todosModel.insertMany(checkoutTodos)).pipe(
             switchMap((res) => {
                 console.log("result: ", res);
@@ -73,22 +71,25 @@ export class TodosService {
                     this.todosModel.updateOne({ _id: id }, updated).exec(),
                 );
             }),
-            switchMap((res) => {
-                return of(res !== undefined && res?.modifiedCount !== 0);
-            }),
+            switchMap((res) =>
+                of(res !== undefined && res?.modifiedCount !== 0),
+            ),
         );
     }
 
     removeById(id: string, user: User): Observable<boolean> {
         return from(this.todosModel.findById(id)).pipe(
             switchMap((todo) => {
-                if (!todo) return of(undefined);
+                if (!todo) {
+                    return of(undefined);
+                }
+
                 this.checkIsOwner(user, todo?.user);
                 return from(this.todosModel.deleteOne({ _id: id }).exec());
             }),
-            switchMap((res) => {
-                return of(res !== undefined && res?.deletedCount !== 0);
-            }),
+            switchMap((res) =>
+                of(res !== undefined && res?.deletedCount !== 0),
+            ),
         );
     }
 }
