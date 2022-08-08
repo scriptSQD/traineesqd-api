@@ -27,13 +27,14 @@ export class UsersService {
                 })
                 .select("+password")
                 .select("+totpSecret")
+                .select("+pwdResetToken")
                 .exec(),
         ).pipe(
             switchMap((usr) => {
                 if (!usr)
                     throw new HttpException(
-                        "Invalid identifier.",
-                        HttpStatus.BAD_REQUEST,
+                        { invalidCredentials: true },
+                        HttpStatus.OK,
                     );
                 else return of(usr.toObject<User>());
             }),
@@ -61,6 +62,7 @@ export class UsersService {
             }),
         );
     }
+
     checkEmail(email: string): Observable<boolean> {
         return from(this.userModel.findOne({ email: email })).pipe(
             switchMap((usr) => {

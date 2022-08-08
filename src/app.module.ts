@@ -6,6 +6,7 @@ import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { TodosModule } from "./todos/todos.module";
+import { MailingModule } from "./mailing/mailing.module";
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { TodosModule } from "./todos/todos.module";
         }),
         UsersModule,
         TodosModule,
+        MailingModule,
     ],
     controllers: [AppController],
     providers: [AppService],

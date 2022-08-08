@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
+import { MailingModule } from "src/mailing/mailing.module";
 import { User, UserSchema } from "src/schemas/user.schema";
 import { UsersService } from "src/users/users.service";
 import { AuthController } from "./auth.controller";
@@ -23,6 +24,7 @@ import { TwoFaModule } from "./two-fa/two-fa.module";
             },
         ]),
         TwoFaModule,
+        MailingModule,
     ],
     controllers: [AuthController],
     providers: [AuthService, UsersService, JwtStrategy],
